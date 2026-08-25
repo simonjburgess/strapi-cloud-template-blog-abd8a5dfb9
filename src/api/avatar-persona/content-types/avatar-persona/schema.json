@@ -1,0 +1,67 @@
+{
+  "kind": "singleType",
+  "collectionName": "avatar_personas",
+  "info": {
+    "singularName": "avatar-persona",
+    "pluralName": "avatar-personas",
+    "displayName": "Avatar Persona",
+    "description": "Character, voice and knowledge base for the live avatar. Leave a field blank to fall back to the bundled George Anson defaults."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "default": "George Anson"
+    },
+    "title": {
+      "type": "string",
+      "description": "Full styling, e.g. Admiral of the Fleet, George Anson, 1st Baron Anson (1697-1762)"
+    },
+    "greeting": {
+      "type": "text",
+      "description": "The first thing he says when a visitor connects."
+    },
+    "personality": {
+      "type": "text",
+      "description": "How he speaks: tone, register, answer length. One instruction per line."
+    },
+    "boundaries": {
+      "type": "text",
+      "description": "What he must refuse or deflect. One rule per line."
+    },
+    "knowledge": {
+      "type": "text",
+      "description": "Everything he is allowed to claim as fact. He is instructed not to go beyond this."
+    },
+    "suggestedQuestions": {
+      "type": "json",
+      "description": "Prompt chips shown to visitors, as a JSON array of strings."
+    },
+    "avatarId": {
+      "type": "string",
+      "description": "LiveAvatar avatar_id. Overrides LIVEAVATAR_AVATAR_ID."
+    },
+    "voiceId": {
+      "type": "string",
+      "description": "LiveAvatar voice_id. Overrides LIVEAVATAR_VOICE_ID."
+    },
+    "contextId": {
+      "type": "string",
+      "description": "LiveAvatar context_id. Filled in automatically on first run, or by `npm run liveavatar -- push-context`."
+    },
+    "language": {
+      "type": "string",
+      "default": "en"
+    },
+    "portrait": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"],
+      "description": "Still image shown before the stream connects."
+    }
+  }
+}

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Ask Admiral Anson &middot; Shugborough</title>
+    <meta
+      name="description"
+      content="Speak with a live digital likeness of Admiral George Anson at Shugborough Hall."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="kiosk">
+      <header class="kiosk__header">
+        <p class="kiosk__eyebrow">Shugborough Hall</p>
+        <h1 class="kiosk__title">Ask Admiral Anson</h1>
+        <p class="kiosk__subtitle" data-role="persona-title">A live digital likeness</p>
+      </header>
+
+      <div class="stage">
+        <div class="stage__frame">
+          <!-- The LiveAvatar SDK attaches the WebRTC audio and video tracks here.
+               Lip sync is rendered server side and arrives as ordinary video. -->
+          <video
+            data-role="video"
+            class="stage__video"
+            playsinline
+            autoplay
+            aria-label="Live video of Admiral Anson"
+          ></video>
+
+          <div class="stage__idle" data-role="idle">
+            <img data-role="portrait" class="stage__portrait" alt="" hidden />
+            <p class="stage__idle-text" data-role="greeting">
+              Press <strong>Begin</strong> to wake the Admiral.
+            </p>
+          </div>
+
+          <div class="stage__badge" data-role="status" data-state="idle">Not connected</div>
+          <div class="stage__speaking" data-role="speaking" hidden>Speaking&hellip;</div>
+        </div>
+
+        <div class="stage__meta">
+          <span data-role="quality"></span>
+          <span data-role="timer"></span>
+        </div>
+      </div>
+
+      <div class="banner" data-role="banner" hidden></div>
+
+      <section class="controls" aria-label="Conversation controls">
+        <div class="controls__primary">
+          <button type="button" class="btn btn--primary" data-role="start">Begin</button>
+
+          <button type="button" class="btn btn--mic" data-role="mic" hidden>
+            <span data-role="mic-label">Hold to speak</span>
+          </button>
+
+          <button type="button" class="btn" data-role="interrupt" hidden>Interrupt</button>
+          <button type="button" class="btn btn--ghost" data-role="stop" hidden>End</button>
+        </div>
+
+        <label class="controls__toggle" data-role="mode-wrap" hidden>
+          <input type="checkbox" data-role="mode" />
+          <span>Hands-free (he listens continuously)</span>
+        </label>
+
+        <form class="composer" data-role="composer" hidden>
+          <label class="visually-hidden" for="composer-input">Type a question</label>
+          <input
+            id="composer-input"
+            data-role="input"
+            type="text"
+            autocomplete="off"
+            placeholder="Or type a question&hellip;"
+          />
+          <button type="submit" class="btn btn--send">Ask</button>
+        </form>
+
+        <div class="suggestions" data-role="suggestions" hidden></div>
+      </section>
+
+      <section class="transcript" aria-live="polite" aria-label="Transcript">
+        <div class="transcript__scroll" data-role="transcript"></div>
+      </section>
+
+      <footer class="kiosk__footer">
+        <p>
+          A digital likeness created for visitors. Answers are generated and may be imperfect &mdash;
+          please ask a member of staff for anything important.
+        </p>
+      </footer>
+    </main>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
