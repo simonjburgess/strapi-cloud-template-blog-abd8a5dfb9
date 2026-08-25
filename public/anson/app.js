@@ -38,6 +38,14 @@ const ui = {
   transcript: el('transcript'),
 };
 
+/**
+ * Microphone capture needs a secure context. A phone opening this page over
+ * plain http:// on a LAN address gets no navigator.mediaDevices at all, so
+ * voice is impossible there - but typed questions still work. Detect it once
+ * and degrade rather than letting session.start() fail outright.
+ */
+const micAvailable = Boolean(window.isSecureContext && navigator.mediaDevices?.getUserMedia);
+
 const state = {
   persona: null,
   sdk: null,
@@ -75,6 +83,14 @@ async function boot() {
     state.sdk = await loadSdk(state.persona.sdk.url);
   } catch (error) {
     return showBanner(`Could not load the LiveAvatar SDK: ${error.message}`, 'error');
+  }
+
+  if (!micAvailable) {
+    showBanner(
+      'Voice needs a secure connection. Over plain http:// the browser blocks the microphone, ' +
+        'so you can type questions but not speak them. Use https:// or localhost for voice.',
+      'warn'
+    );
   }
 
   ui.start.disabled = false;
@@ -158,14 +174,14 @@ async function startSession() {
     return showBanner(error.message, 'error');
   }
 
-  const session = new LiveAvatarSession(credentials.sessionToken, {
-    // Mic starts muted and in push-to-talk: a gallery is noisy, and a hot mic
-    // would have him answering passing conversations.
-    voiceChat: {
-      defaultMuted: true,
-      mode: SessionInteractivityMode.PUSH_TO_TALK,
-    },
-  });
+  // Mic starts muted and in push-to-talk: a gallery is noisy, and a hot mic
+  // would have him answering passing conversations. Omitted entirely when the
+  // browser cannot capture audio, so the session still starts for typed questions.
+  const sessionConfig = micAvailable
+    ? { voiceChat: { defaultMuted: true, mode: SessionInteractivityMode.PUSH_TO_TALK } }
+    : {};
+
+  const session = new LiveAvatarSession(credentials.sessionToken, sessionConfig);
 
   state.session = session;
 
@@ -219,7 +235,12 @@ async function startSession() {
 
 function showLiveControls() {
   ui.start.hidden = true;
-  for (const control of [ui.mic, ui.interrupt, ui.stop, ui.composer, ui.modeWrap]) {
+
+  const controls = micAvailable
+    ? [ui.mic, ui.interrupt, ui.stop, ui.composer, ui.modeWrap]
+    : [ui.interrupt, ui.stop, ui.composer];
+
+  for (const control of controls) {
     control.hidden = false;
   }
   ui.suggestions.hidden = false;

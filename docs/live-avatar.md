@@ -168,6 +168,46 @@ system prompt. Only the safe subset is served, via `/api/avatar/persona`.
 
 ---
 
+## Running it from a phone
+
+The page is responsive and works on a phone, but **voice needs HTTPS**.
+
+Microphone capture requires what browsers call a *secure context*. On a plain
+`http://192.168.x.x:1337/anson/` LAN address, `navigator.mediaDevices` is not
+merely blocked — it is `undefined` entirely. Only `https://` and `localhost`
+count as secure.
+
+The page detects this and degrades rather than breaking: it warns the visitor,
+starts the session without requesting voice chat (so `start()` cannot fail on
+the missing microphone), hides the push-to-talk and hands-free controls, and
+leaves the typed question box and prompt chips working. You still see and hear
+Anson answer — you just have to type.
+
+To get voice on a phone, pick one:
+
+| Route | How | Good for |
+|---|---|---|
+| **Tunnel** | `npx localtunnel --port 1337`, or `cloudflared tunnel --url http://localhost:1337`, or ngrok. Open the `https://` URL it prints. | Quickest way to test on a real phone |
+| **Deploy** | Push to Strapi Cloud or any host with TLS. | Sharing with colleagues |
+| **LAN + certificate** | Terminate TLS in front of Strapi with a trusted cert. | A permanent in-gallery kiosk |
+
+Note that a tunnel exposes `/api/avatar/session` publicly, and every call to it
+mints a billable session. Keep tunnels short-lived, and see the hardening notes
+below before leaving one running.
+
+Also worth knowing on mobile:
+
+- **iOS Safari** will not play audio until the visitor taps. The Begin button
+  counts as that tap, so this normally resolves itself; the page falls back to a
+  "Tap the video to enable sound" prompt if it does not.
+- **The screen locking or the tab going to the background** tears the WebRTC
+  session down. The `pagehide` handler stops the session cleanly so it does not
+  keep billing.
+- **Mobile data.** A live avatar stream is real video — do not leave it running
+  on a metered connection.
+
+---
+
 ## Before this goes in front of the public
 
 1. **Lock down `/api/avatar/session`.** It is `auth: false` so a kiosk needs no
