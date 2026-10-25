@@ -1,6 +1,6 @@
 // Network first, falling back to the last copy, so the app opens with the latest prices
 // and still shows the most recent ones when the phone is offline.
-const CACHE = "tariff-compare-v1";
+const CACHE = "tariff-compare-v2";
 const SHELL = ["/", "/index.html", "/app.js", "/styles.css", "/lib/chart.umd.min.js", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {

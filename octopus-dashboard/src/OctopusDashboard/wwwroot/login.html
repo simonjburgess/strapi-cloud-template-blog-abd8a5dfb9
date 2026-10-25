@@ -19,13 +19,6 @@
     <p id="error" class="error" role="alert" hidden></p>
     <button type="submit" class="primary">Sign in</button>
   </form>
-  <script>
-    const reason = new URLSearchParams(location.search).get("error");
-    if (reason) {
-      const el = document.getElementById("error");
-      el.textContent = reason === "rate" ? "Too many attempts. Wait a minute and try again." : "That code isn't right.";
-      el.hidden = false;
-    }
-  </script>
+  <script src="login.js"></script>
 </body>
 </html>

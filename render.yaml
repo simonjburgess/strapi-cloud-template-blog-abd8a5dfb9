@@ -1,5 +1,9 @@
 # Render Blueprint for the Octopus tariff dashboard in octopus-dashboard/.
-# In Render: New → Blueprint, pick this repository, and fill in the three secrets when asked.
+# In Render: New → Blueprint, pick this repository, then Apply.
+#
+# This runs the shared version: visitors connect their own Octopus account in their browser, and the
+# server stores no keys. For a private version with your own account built in, add Octopus__ApiKey,
+# Octopus__AccountNumber and Dashboard__AccessCode in the service's Environment tab.
 services:
   - type: web
     name: tariff-compare
@@ -15,11 +19,5 @@ services:
       paths:
         - octopus-dashboard/**
     envVars:
-      - key: Dashboard__AccessCode
-        sync: false
-      - key: Octopus__ApiKey
-        sync: false
-      - key: Octopus__AccountNumber
-        sync: false
       - key: Octopus__DefaultRegion
         value: C

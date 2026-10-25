@@ -5,6 +5,7 @@
   const charts = {};
   let data = null;
   let halfHourDay = 0;
+  let serverAccount = false;
 
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const colour = (key) => css(`--${key}`) || css("--accent");
@@ -19,8 +20,36 @@
     set(k, v) { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } },
   };
 
-  async function getJson(url) {
-    const res = await fetch(url);
+  // The visitor's Octopus key lives only in their browser: localStorage if they ask us to remember it,
+  // otherwise sessionStorage, which is cleared when the tab closes.
+  const CREDS = "octopusAccount";
+  const creds = {
+    get() {
+      for (const area of ["localStorage", "sessionStorage"]) {
+        try {
+          const v = JSON.parse(window[area].getItem(CREDS) ?? "null");
+          if (v?.apiKey && v?.account) return v;
+        } catch { /* storage unavailable or corrupt */ }
+      }
+      return null;
+    },
+    save(value, remember) {
+      this.clear();
+      try { window[remember ? "localStorage" : "sessionStorage"].setItem(CREDS, JSON.stringify(value)); } catch { /* storage unavailable */ }
+    },
+    clear() {
+      for (const area of ["localStorage", "sessionStorage"]) {
+        try { window[area].removeItem(CREDS); } catch { /* storage unavailable */ }
+      }
+    },
+    headers() {
+      const c = this.get();
+      return c ? { "X-Octopus-Api-Key": c.apiKey, "X-Octopus-Account": c.account } : {};
+    },
+  };
+
+  async function getJson(url, headers = {}) {
+    const res = await fetch(url, { headers });
     if (res.status === 401) {
       location.href = "/login.html";
       throw new Error("Signing in…");
@@ -33,7 +62,8 @@
   async function init() {
     const config = await getJson("/api/config");
     const regionSel = $("#region");
-    regionSel.innerHTML = `<option value="">${config.hasAccount ? "From my account" : "Default"}</option>` +
+    serverAccount = config.serverAccount;
+    regionSel.innerHTML = `<option value="">Automatic</option>` +
       config.regions.map((r) => `<option value="${r.code}">${r.code} · ${esc(r.name)}</option>`).join("");
     regionSel.value = store.get("region") ?? "";
     $("#days").value = store.get("days") ?? "30";
@@ -49,6 +79,11 @@
       renderHalfHours();
     }));
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => data && render());
+
+    $("#account").hidden = serverAccount;
+    $("#accountForm").addEventListener("submit", connectAccount);
+    $("#forget").addEventListener("click", forgetAccount);
+    showAccountState();
 
     await load();
   }
@@ -68,6 +103,37 @@
 
   function setStatus(text) { $("#status").textContent = text; }
 
+  function showAccountState() {
+    const c = creds.get();
+    $("#account").classList.toggle("connected", !!c);
+    $("#accountState").textContent = c ? `Connected · ${c.account}` : "Not connected · prices only";
+    $("#accountNumber").value = c?.account ?? "";
+    $("#apiKey").value = "";
+    $("#apiKey").required = !c;
+    $("#apiKey").placeholder = c ? "Saved on this device" : "sk_live_…";
+    $("#forget").hidden = !c;
+  }
+
+  async function connectAccount(e) {
+    e.preventDefault();
+    const existing = creds.get();
+    const apiKey = $("#apiKey").value.trim() || existing?.apiKey;
+    const account = $("#accountNumber").value.trim().toUpperCase();
+    if (!apiKey || !account) return;
+    creds.save({ apiKey, account }, $("#remember").checked);
+    showAccountState();
+    $("#account").open = false;
+    await load();
+  }
+
+  async function forgetAccount() {
+    creds.clear();
+    // The offline copy of the dashboard holds this person's usage, so drop it too.
+    try { for (const k of await caches.keys()) await caches.delete(k); } catch { /* no cache API */ }
+    showAccountState();
+    await load();
+  }
+
   async function load() {
     const region = $("#region").value;
     const days = $("#days").value;
@@ -77,7 +143,7 @@
     try {
       const qs = new URLSearchParams({ days });
       if (region) qs.set("region", region);
-      data = await getJson(`/api/dashboard?${qs}`);
+      data = await getJson(`/api/dashboard?${qs}`, creds.headers());
       if (!region) $("#region").value = "";
       render();
       setStatus(`Region ${data.region} · ${data.regionName} · ${shortDate(data.from)} to ${shortDate(data.to)} · updated ${new Date(data.generatedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`);
@@ -239,10 +305,15 @@
     const body = $("#costsBody");
     charts.costChart?.destroy();
     if (!data.hasAccount || !data.costs) {
-      body.innerHTML = `<p class="empty">Add your Octopus API key and account number to price your real smart-meter usage under each tariff.
-        Find both at octopus.energy → Account → Personal details → API access, then run
-        <code>dotnet user-secrets set "Octopus:ApiKey" "sk_live_…"</code> and
-        <code>dotnet user-secrets set "Octopus:AccountNumber" "A-1234ABCD"</code>.</p>`;
+      body.innerHTML = creds.get()
+        ? `<p class="empty">Couldn't load your account. Check the message at the top of the page, or your key and account number.</p>`
+        : `<p class="empty">Connect your Octopus account to price your real smart-meter usage under each tariff.</p>
+           <p><button type="button" id="openAccount" class="primary">Connect my account</button></p>`;
+      $("#openAccount")?.addEventListener("click", () => {
+        $("#account").open = true;
+        $("#account").scrollIntoView({ behavior: "smooth", block: "start" });
+        $("#apiKey").focus({ preventScroll: true });
+      });
       return;
     }
     const { electricity, gas, notes } = data.costs;

@@ -45,6 +45,31 @@
     <p id="status" class="status" role="status">Loading…</p>
     <ul id="warnings" class="warnings" hidden></ul>
 
+    <details id="account" class="panel account" hidden>
+      <summary>
+        <span class="account-title">Your Octopus account</span>
+        <span id="accountState" class="unit">Not connected · prices only</span>
+      </summary>
+      <form id="accountForm" class="account-form" autocomplete="off">
+        <p class="unit">Connect your account to see what your own smart-meter usage would cost on each tariff.
+          Find both values at octopus.energy → Account → Personal details → API access.</p>
+        <label>API key
+          <input id="apiKey" type="password" placeholder="sk_live_…" spellcheck="false" autocapitalize="off" required>
+        </label>
+        <label>Account number
+          <input id="accountNumber" placeholder="A-1234ABCD" spellcheck="false" autocapitalize="characters" required>
+        </label>
+        <label class="check"><input id="remember" type="checkbox" checked> Remember on this device</label>
+        <div class="account-actions">
+          <button type="submit" class="primary">Connect</button>
+          <button type="button" id="forget" hidden>Disconnect and forget</button>
+        </div>
+        <p class="privacy">Your key is stored only in this browser. It's sent to this site over HTTPS with each refresh,
+          used to fetch your data from Octopus, and never saved on the server. Anyone with your key can read your
+          account details, so only use this site if you trust whoever runs it.</p>
+      </form>
+    </details>
+
     <section id="cards" class="cards" aria-label="Prices today"></section>
 
     <section class="panel">

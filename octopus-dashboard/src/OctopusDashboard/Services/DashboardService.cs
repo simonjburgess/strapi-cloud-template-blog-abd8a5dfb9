@@ -14,7 +14,7 @@ public sealed class DashboardService(OctopusClient client, IOptions<OctopusOptio
 
     private sealed record Loaded(TariffChoice Choice, RateTimeline ElecUnit, RateTimeline ElecStanding, RateTimeline GasUnit, RateTimeline GasStanding);
 
-    public async Task<DashboardResponse> BuildAsync(string? requestedRegion, int days, CancellationToken ct)
+    public async Task<DashboardResponse> BuildAsync(string? requestedRegion, int days, OctopusCredentials? credentials, CancellationToken ct)
     {
         var warnings = new List<string>();
         var now = time.GetUtcNow();
@@ -27,11 +27,11 @@ public sealed class DashboardService(OctopusClient client, IOptions<OctopusOptio
         // Your account (optional) tells us your region and your exact Tracker product.
         Account? account = null;
         string? yourElec = null, yourGas = null;
-        if (_options.HasAccount)
+        if (credentials is not null)
         {
             try
             {
-                account = await client.GetAccountAsync(ct);
+                account = await client.GetAccountAsync(credentials, ct);
                 (yourElec, yourGas) = CurrentTariffs(account, now);
             }
             catch (Exception ex)
@@ -55,7 +55,7 @@ public sealed class DashboardService(OctopusClient client, IOptions<OctopusOptio
 
         CostSection? costs = null;
         if (account is not null)
-            costs = await CostsAsync(account, loaded, fromT, UkTime.StartOf(today), warnings, ct);
+            costs = await CostsAsync(credentials!, account, loaded, fromT, UkTime.StartOf(today), warnings, ct);
 
         return new DashboardResponse(region, Regions.Names[region], days, from, tomorrow, now, account is not null,
             summaries, electricity, gas, halfHourly, costs, warnings);
@@ -226,7 +226,7 @@ public sealed class DashboardService(OctopusClient client, IOptions<OctopusOptio
         return new DayHalfHours(date, labels, series);
     }
 
-    private async Task<CostSection> CostsAsync(Account account, List<Loaded> loaded, DateTimeOffset from, DateTimeOffset to, List<string> warnings, CancellationToken ct)
+    private async Task<CostSection> CostsAsync(OctopusCredentials credentials, Account account, List<Loaded> loaded, DateTimeOffset from, DateTimeOffset to, List<string> warnings, CancellationToken ct)
     {
         var notes = new List<string>();
         var property = account.Properties.FirstOrDefault();
@@ -235,7 +235,7 @@ public sealed class DashboardService(OctopusClient client, IOptions<OctopusOptio
         var elecPoint = property?.ElectricityMeterPoints.FirstOrDefault(m => !m.IsExport);
         if (elecPoint is not null)
         {
-            var usage = await BestMeterUsageAsync(Fuel.Electricity, elecPoint.Mpan, elecPoint.Meters, from, to, warnings, ct);
+            var usage = await BestMeterUsageAsync(credentials, Fuel.Electricity, elecPoint.Mpan, elecPoint.Meters, from, to, warnings, ct);
             elec = CostCalculator.Compare(usage, loaded.Where(l => !l.ElecUnit.IsEmpty).ToDictionary(l => l.Choice.Key, l => (l.ElecUnit, l.ElecStanding)));
             if (elec is null) notes.Add("No complete days of smart meter electricity readings found for this period yet.");
         }
@@ -243,7 +243,7 @@ public sealed class DashboardService(OctopusClient client, IOptions<OctopusOptio
         var gasPoint = property?.GasMeterPoints.FirstOrDefault();
         if (gasPoint is not null)
         {
-            var usage = await BestMeterUsageAsync(Fuel.Gas, gasPoint.Mprn, gasPoint.Meters, from, to, warnings, ct);
+            var usage = await BestMeterUsageAsync(credentials, Fuel.Gas, gasPoint.Mprn, gasPoint.Meters, from, to, warnings, ct);
             if (_options.GasConsumptionInCubicMetres)
             {
                 usage = usage.Select(u => u with { Amount = RateMaths.GasToKwh(u.Amount, _options.GasCalorificValue) }).ToList();
@@ -256,7 +256,7 @@ public sealed class DashboardService(OctopusClient client, IOptions<OctopusOptio
         return new CostSection(elec, gas, notes);
     }
 
-    private async Task<List<Consumption>> BestMeterUsageAsync(Fuel fuel, string point, List<Meter> meters, DateTimeOffset from, DateTimeOffset to, List<string> warnings, CancellationToken ct)
+    private async Task<List<Consumption>> BestMeterUsageAsync(OctopusCredentials credentials, Fuel fuel, string point, List<Meter> meters, DateTimeOffset from, DateTimeOffset to, List<string> warnings, CancellationToken ct)
     {
         // Properties often list old, replaced meters too; use whichever serial actually has readings.
         List<Consumption> best = [];
@@ -264,7 +264,7 @@ public sealed class DashboardService(OctopusClient client, IOptions<OctopusOptio
         {
             try
             {
-                var usage = await client.GetConsumptionAsync(fuel, point, meter.SerialNumber, from, to, ct);
+                var usage = await client.GetConsumptionAsync(credentials, fuel, point, meter.SerialNumber, from, to, ct);
                 if (usage.Count > best.Count) best = usage;
             }
             catch (Exception ex)
