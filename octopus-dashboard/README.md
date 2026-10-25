@@ -63,13 +63,19 @@ dotnet run --launch-profile Phone
 
 ### Option B: host it online (works anywhere, free tier)
 
-The `Dockerfile` runs on any host that builds Docker images, such as [Render](https://render.com), [Railway](https://railway.app), [Fly.io](https://fly.io) or Azure App Service. On Render, for example:
+The repository root has a `render.yaml` [Render Blueprint](https://render.com/docs/blueprint-spec) that sets everything up on Render's free plan:
 
-1. **New → Web Service**, connect this GitHub repository, and set **Root Directory** to `octopus-dashboard`. Render detects the Dockerfile.
-2. Under **Environment**, add `Dashboard__AccessCode`, `Octopus__ApiKey` and `Octopus__AccountNumber` (note the double underscores).
-3. Deploy, then open the `https://….onrender.com` address on your phone.
+1. Sign up at [render.com](https://render.com) with your GitHub account, and give Render access to this repository.
+2. Click **New → Blueprint** and pick this repository. Choose the branch that contains `octopus-dashboard/`.
+3. When asked, enter the three secrets:
+   - `Dashboard__AccessCode`: a long passphrase you'll type on your phone
+   - `Octopus__ApiKey`: from octopus.energy → Account → Personal details → API access
+   - `Octopus__AccountNumber`: e.g. `A-1234ABCD`
+4. Click **Apply**. The first build takes a few minutes. Then open the `https://tariff-compare-….onrender.com` address on your phone.
 
-Free Render services sleep when idle, so the first visit after a while can take up to a minute to load. After each redeploy you'll be asked for the access code again.
+Free Render services sleep when idle, so the first visit after a while can take up to a minute to load. Your phone stays signed in through these restarts. To sign out every device, change `Dashboard__AccessCode` in Render's **Environment** tab.
+
+The `Dockerfile` also runs on other hosts that build Docker images, such as [Railway](https://railway.app), [Fly.io](https://fly.io) or Azure App Service. Set the same three environment variables there.
 
 ### Add it to your home screen
 

@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
+using OctopusDashboard.Services;
 using Xunit;
 
 namespace OctopusDashboard.Tests;
@@ -43,6 +44,45 @@ public class AccessTests
         var right = await Login(client, "correct horse");
         Assert.Equal("/", right.Headers.Location?.OriginalString);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/config")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Sign_in_survives_an_app_restart()
+    {
+        string cookie;
+        using (var first = App("correct horse"))
+        {
+            var res = await Login(first.CreateClient(NoRedirects), "correct horse");
+            cookie = res.Headers.GetValues("Set-Cookie").Single().Split(';')[0];
+        }
+
+        using var restarted = App("correct horse");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/config");
+        request.Headers.Add("Cookie", cookie);
+        Assert.Equal(HttpStatusCode.OK, (await restarted.CreateClient(NoRedirects).SendAsync(request)).StatusCode);
+    }
+
+    [Fact]
+    public void Session_tokens_expire_and_cannot_be_forged()
+    {
+        var now = DateTimeOffset.Parse("2026-10-25T12:00:00Z");
+        var token = SessionToken.Create("code", now);
+
+        Assert.True(SessionToken.IsValid(token, "code", now.AddDays(89)));
+        Assert.False(SessionToken.IsValid(token, "code", now.AddDays(91)));
+        Assert.False(SessionToken.IsValid(token, "changed code", now));
+        // Pushing the expiry forward breaks the signature.
+        var extended = $"{now.AddYears(5).ToUnixTimeSeconds()}{token[token.IndexOf('.')..]}";
+        Assert.False(SessionToken.IsValid(extended, "code", now));
+        Assert.False(SessionToken.IsValid(null, "code", now));
+        Assert.False(SessionToken.IsValid("garbage", "code", now));
+    }
+
+    [Fact]
+    public async Task Health_check_is_public()
+    {
+        using var app = App("correct horse");
+        Assert.Equal(HttpStatusCode.OK, (await app.CreateClient().GetAsync("/healthz")).StatusCode);
     }
 
     [Fact]

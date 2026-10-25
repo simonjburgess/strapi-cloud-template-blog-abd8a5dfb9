@@ -1,0 +1,25 @@
+# Render Blueprint for the Octopus tariff dashboard in octopus-dashboard/.
+# In Render: New → Blueprint, pick this repository, and fill in the three secrets when asked.
+services:
+  - type: web
+    name: tariff-compare
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerContext: ./octopus-dashboard
+    dockerfilePath: ./octopus-dashboard/Dockerfile
+    healthCheckPath: /healthz
+    autoDeploy: true
+    # Only redeploy when the dashboard changes, not the rest of this repository.
+    buildFilter:
+      paths:
+        - octopus-dashboard/**
+    envVars:
+      - key: Dashboard__AccessCode
+        sync: false
+      - key: Octopus__ApiKey
+        sync: false
+      - key: Octopus__AccountNumber
+        sync: false
+      - key: Octopus__DefaultRegion
+        value: C

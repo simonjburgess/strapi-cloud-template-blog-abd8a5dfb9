@@ -1,9 +1,4 @@
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using OctopusDashboard;
@@ -34,20 +29,6 @@ builder.Services.AddScoped<DashboardService>();
 var accessCode = builder.Configuration["Dashboard:AccessCode"];
 var requireLogin = !string.IsNullOrWhiteSpace(accessCode);
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(o =>
-{
-    o.Cookie.Name = "tariff_auth";
-    o.Cookie.HttpOnly = true;
-    o.Cookie.SameSite = SameSiteMode.Lax;
-    o.ExpireTimeSpan = TimeSpan.FromDays(90);
-    o.SlidingExpiration = true;
-    o.Events.OnRedirectToLogin = ctx =>
-    {
-        ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        return Task.CompletedTask;
-    };
-});
-builder.Services.AddAuthorization();
 builder.Services.AddRateLimiter(o =>
 {
     o.AddPolicy("login", ctx => RateLimitPartition.GetFixedWindowLimiter(
@@ -76,25 +57,39 @@ app.UseForwardedHeaders();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseRateLimiter();
-app.UseAuthentication();
-app.UseAuthorization();
 
-app.MapPost("/login", async (HttpContext ctx) =>
+app.MapGet("/healthz", () => Results.Ok("ok"));
+
+app.MapPost("/login", async (HttpContext ctx, TimeProvider time) =>
 {
     if (!requireLogin) return Results.Redirect("/");
     var form = await ctx.Request.ReadFormAsync();
-    var given = SHA256.HashData(Encoding.UTF8.GetBytes(form["code"].ToString()));
-    var expected = SHA256.HashData(Encoding.UTF8.GetBytes(accessCode!));
-    if (!CryptographicOperations.FixedTimeEquals(given, expected))
+    if (!SessionToken.CodeMatches(form["code"].ToString(), accessCode!))
         return Results.Redirect("/login.html?error=1");
 
-    var identity = new ClaimsIdentity([new Claim(ClaimTypes.Name, "owner")], CookieAuthenticationDefaults.AuthenticationScheme);
-    await ctx.SignInAsync(new ClaimsPrincipal(identity), new AuthenticationProperties { IsPersistent = true });
+    var now = time.GetUtcNow();
+    ctx.Response.Cookies.Append(SessionToken.CookieName, SessionToken.Create(accessCode!, now), new CookieOptions
+    {
+        HttpOnly = true,
+        Secure = ctx.Request.IsHttps,
+        SameSite = SameSiteMode.Lax,
+        Expires = now.Add(SessionToken.Lifetime),
+    });
     return Results.Redirect("/");
 }).RequireRateLimiting("login");
 
 var api = app.MapGroup("/api");
-if (requireLogin) api.RequireAuthorization();
+if (requireLogin)
+{
+    api.AddEndpointFilter(async (ctx, next) =>
+    {
+        var http = ctx.HttpContext;
+        var now = http.RequestServices.GetRequiredService<TimeProvider>().GetUtcNow();
+        return SessionToken.IsValid(http.Request.Cookies[SessionToken.CookieName], accessCode!, now)
+            ? await next(ctx)
+            : Results.Unauthorized();
+    });
+}
 
 api.MapGet("/config", (IOptions<OctopusOptions> options) => new
 {
