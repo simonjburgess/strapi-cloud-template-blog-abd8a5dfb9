@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5396C371-73C0-4895-969E-146C60BCEFA8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OctopusDashboard", "src\OctopusDashboard\OctopusDashboard.csproj", "{E827FA9B-D58F-4398-A42F-8A45BFAC8569}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{9E5C901A-08A8-4462-B157-1324C794308B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OctopusDashboard.Tests", "tests\OctopusDashboard.Tests\OctopusDashboard.Tests.csproj", "{FE87ACD5-B46E-40C9-BB4C-D75363312ECD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E827FA9B-D58F-4398-A42F-8A45BFAC8569}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E827FA9B-D58F-4398-A42F-8A45BFAC8569}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E827FA9B-D58F-4398-A42F-8A45BFAC8569}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E827FA9B-D58F-4398-A42F-8A45BFAC8569}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE87ACD5-B46E-40C9-BB4C-D75363312ECD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE87ACD5-B46E-40C9-BB4C-D75363312ECD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE87ACD5-B46E-40C9-BB4C-D75363312ECD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE87ACD5-B46E-40C9-BB4C-D75363312ECD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E827FA9B-D58F-4398-A42F-8A45BFAC8569} = {5396C371-73C0-4895-969E-146C60BCEFA8}
+		{FE87ACD5-B46E-40C9-BB4C-D75363312ECD} = {9E5C901A-08A8-4462-B157-1324C794308B}
+	EndGlobalSection
+EndGlobal

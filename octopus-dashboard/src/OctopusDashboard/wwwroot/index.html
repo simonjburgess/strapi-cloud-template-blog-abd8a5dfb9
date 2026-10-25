@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tariff Compare</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>Tariff Compare</h1>
+      <p class="sub">Octopus Tracker vs Agile vs Flexible, from the Octopus Energy public API</p>
+    </div>
+    <form id="controls" class="controls">
+      <label>Region
+        <select id="region"></select>
+      </label>
+      <label>Postcode
+        <span class="inline">
+          <input id="postcode" placeholder="e.g. SW1A 1AA" autocomplete="postal-code">
+          <button type="button" id="findRegion">Find</button>
+        </span>
+      </label>
+      <label>Period
+        <select id="days">
+          <option value="7">7 days</option>
+          <option value="30" selected>30 days</option>
+          <option value="90">90 days</option>
+          <option value="180">180 days</option>
+          <option value="365">1 year</option>
+        </select>
+      </label>
+      <button type="submit" class="primary">Refresh</button>
+    </form>
+  </header>
+
+  <main>
+    <p id="status" class="status" role="status">Loading…</p>
+    <ul id="warnings" class="warnings" hidden></ul>
+
+    <section id="cards" class="cards" aria-label="Prices today"></section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Electricity unit rate, daily average</h2>
+        <span class="unit">p/kWh inc VAT · shaded band is Agile's cheapest–dearest half-hour</span>
+      </div>
+      <div class="chart"><canvas id="elecChart"></canvas></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Half-hourly prices</h2>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" data-day="0" aria-selected="true">Today</button>
+          <button type="button" role="tab" data-day="1" aria-selected="false">Tomorrow</button>
+        </div>
+      </div>
+      <p id="halfHourNote" class="unit"></p>
+      <div class="chart"><canvas id="halfHourChart"></canvas></div>
+    </section>
+
+    <section class="panel" id="gasPanel">
+      <div class="panel-head">
+        <h2>Gas unit rate, daily</h2>
+        <span class="unit">p/kWh inc VAT · Agile is electricity only</span>
+      </div>
+      <div class="chart"><canvas id="gasChart"></canvas></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Standing charges</h2><span class="unit">p/day inc VAT</span></div>
+      <div class="table-wrap"><table id="standing"></table></div>
+    </section>
+
+    <section class="panel" id="costs">
+      <div class="panel-head"><h2>What your usage would have cost</h2></div>
+      <div id="costsBody"></div>
+    </section>
+  </main>
+
+  <footer>Data from <a href="https://developer.octopus.energy/">api.octopus.energy</a>. Not affiliated with Octopus Energy.</footer>
+
+  <script src="lib/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
