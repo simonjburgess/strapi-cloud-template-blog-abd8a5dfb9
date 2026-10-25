@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#5b3fd6">
+  <title>Tariff Compare</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="login">
+  <form method="post" action="/login" class="panel login-box">
+    <img src="icons/icon-192.png" alt="" width="64" height="64">
+    <h1>Tariff Compare</h1>
+    <label for="code">Access code</label>
+    <input id="code" name="code" type="password" autocomplete="current-password" required autofocus>
+    <p id="error" class="error" role="alert" hidden></p>
+    <button type="submit" class="primary">Sign in</button>
+  </form>
+  <script>
+    const reason = new URLSearchParams(location.search).get("error");
+    if (reason) {
+      const el = document.getElementById("error");
+      el.textContent = reason === "rate" ? "Too many attempts. Wait a minute and try again." : "That code isn't right.";
+      el.hidden = false;
+    }
+  </script>
+</body>
+</html>

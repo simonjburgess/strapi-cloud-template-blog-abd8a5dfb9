@@ -38,6 +38,46 @@ With these set, the app:
 
 You can also use the environment variables `Octopus__ApiKey` and `Octopus__AccountNumber`.
 
+## Use it on your phone
+
+The dashboard works well on a phone screen and can be added to your home screen, where it opens full-screen like an app.
+
+**Set an access code first.** Once the app is reachable from your phone, anyone who finds its address could otherwise see your usage:
+
+```bash
+dotnet user-secrets set "Dashboard:AccessCode" "pick-a-long-passphrase"
+```
+
+You enter the code once on each device, and the phone then stays signed in for 90 days. Five wrong attempts in a minute lock out further attempts for that minute.
+
+### Option A: over your home Wi-Fi (quickest, needs your computer on)
+
+```bash
+cd octopus-dashboard/src/OctopusDashboard
+dotnet run --launch-profile Phone
+```
+
+1. Find your computer's local IP address: `ipconfig` on Windows, or `ipconfig getifaddr en0` on a Mac. It looks like `192.168.1.23`.
+2. On your phone, connected to the same Wi-Fi, open `http://192.168.1.23:5080`.
+3. Allow the app through your computer's firewall if it asks.
+
+### Option B: host it online (works anywhere, free tier)
+
+The `Dockerfile` runs on any host that builds Docker images, such as [Render](https://render.com), [Railway](https://railway.app), [Fly.io](https://fly.io) or Azure App Service. On Render, for example:
+
+1. **New → Web Service**, connect this GitHub repository, and set **Root Directory** to `octopus-dashboard`. Render detects the Dockerfile.
+2. Under **Environment**, add `Dashboard__AccessCode`, `Octopus__ApiKey` and `Octopus__AccountNumber` (note the double underscores).
+3. Deploy, then open the `https://….onrender.com` address on your phone.
+
+Free Render services sleep when idle, so the first visit after a while can take up to a minute to load. After each redeploy you'll be asked for the access code again.
+
+### Add it to your home screen
+
+- **iPhone (Safari):** tap Share → **Add to Home Screen**.
+- **Android (Chrome):** tap ⋮ → **Install app** (or **Add to Home screen**).
+
+Over HTTPS (Option B) it also shows the last prices it loaded when you're offline. Over plain `http://` on your Wi-Fi (Option A), the home-screen shortcut still works, but browsers turn off offline support.
+
 ## Settings (`appsettings.json`, section `Octopus`)
 
 | Setting | Default | Notes |
@@ -47,6 +87,8 @@ You can also use the environment variables `Octopus__ApiKey` and `Octopus__Accou
 | `GasConsumptionInCubicMetres` | `true` | SMETS2 meters report gas in m³, SMETS1 in kWh. Set `false` for SMETS1 |
 | `GasCalorificValue` | `39.5` | MJ/m³, used for the m³ → kWh conversion |
 | `CacheMinutes` | `30` | How long API responses are cached in memory |
+
+`Dashboard:AccessCode` (outside the `Octopus` section) turns on the sign-in page. Leave it blank only when the app runs on your own computer.
 
 ## How it works
 

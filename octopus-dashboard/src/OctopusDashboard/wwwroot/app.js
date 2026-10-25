@@ -21,6 +21,10 @@
 
   async function getJson(url) {
     const res = await fetch(url);
+    if (res.status === 401) {
+      location.href = "/login.html";
+      throw new Error("Signing in…");
+    }
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.error || body.title || `${res.status} ${res.statusText}`);
     return body;
@@ -254,6 +258,11 @@
     const options = baseOptions((v) => `£${Number(v).toFixed(2)}`);
     options.plugins.title = { display: true, text: "Daily electricity cost", color: css("--muted") };
     draw("costChart", { type: "bar", data: { labels: electricity.daily.map((d) => shortDate(d.date)), datasets }, options });
+  }
+
+  // Service workers only run over HTTPS or on localhost; elsewhere the page still works, just not offline.
+  if ("serviceWorker" in navigator && window.isSecureContext) {
+    navigator.serviceWorker.register("/sw.js").catch(() => { /* offline support is optional */ });
   }
 
   init().catch((e) => setStatus(`Couldn't start: ${e.message}`));
